@@ -8,8 +8,11 @@ lib/SQL/AnyDBD/Mysql.pm
 lib/SQL/AnyDBD/Pg.pm
 lib/SQL/AnyDBD/SQLite.pm
 t/1.t
+t/delete.t
 t/in.t
+t/insert.t
 t/limit.t
 t/select.t
 t/test_util.pl
+t/update.t
 META.yml                                Module meta-data (added by MakeMaker)

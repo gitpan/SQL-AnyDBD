@@ -29,7 +29,7 @@ our @EXPORT = qw(
 	
 );
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 
 # Preloaded methods go here.
@@ -83,7 +83,7 @@ them in that order, but now is no time to get into a holy war. :)
 
 =head1 METHODS
 
-=head2 $sb->LIMIT ( rows_desired => $rows_desired, start_row => $start_row )
+=head2 $sb->LIMIT(rows_desired => $r [ , start_row => $s ] )
 
 =over 4
 
@@ -110,11 +110,11 @@ It is required that the arrayref C<values> be passed.
 It is not required that the
 arrayref have any data:
 
- my $sql = $sb->IN(values => [qw(fee fi fo fum)]);
+ my $sql = $sb->IN(values => [12..14]);
 
  # yields...
 
- IN (fee,fi,fo,fum)
+ IN (12,13,14)
 
 =head2 $sb->SELECT ( fields => \@f, tables => \@t, ... )
 
@@ -132,20 +132,73 @@ arguments take an arrayref  B<even if they only have one argument>:
 
  my %select = 
 	(
-	 fields => [qw(student_ssan)],
-	 tables => ["student INNER JOIN classes"],
-	 where  => "student.classes_id = classes.classes_id",
+	 fields   => [qw(student_ssan)],
+	 tables   => ["student INNER JOIN classes"],
+	 where    => "student.classes_id = classes.classes_id",
 	 group_by => "classes_year",
 	 having   => "student_age > 30",
 	 order_by => 'student_id',
-	 limit  => { rows_desired => 5, start_row => 77 },
+	 limit    => { rows_desired => 5, start_row => 77 },
 	);
 
  my $sb  = SQL::AnyDBD->new($dbh);
  my $sql = $sb->SELECT(%select);
 
+ # yields...
 
-=head2 $sb->UPDATE ( set => $set_expr, ...
+ SELECT 
+    student_ssan 
+ FROM 
+    student INNER JOIN classes 
+ WHERE 
+    student.classes_id = classes.classes_id 
+ GROUP BY 
+    classes_year 
+ HAVING 
+    student_age > 30 
+ ORDER BY 
+    student_id 
+ LIMIT  
+    5 
+ OFFSET 
+    77
+
+=head2 $sb->DELETE ( table => $tbl [ ,  ...  ] )
+
+=over 4 
+
+=item REQUIRED: table
+
+=item OPTIONAL:  where, order_by, limit
+
+=back
+
+C<table> is the name of the table from which to delete records. C<where> is a
+string specifying the filtering of rows. C<order_by> is useful in
+conjunction with C<limit> in order to delete rows based on order:
+
+ my %parms = 
+	(
+	 table => 'student',
+	 where  => "student.classes_id = 420",
+	 order_by => 'date_enrolled',
+	 limit  => 4
+	);
+
+ my $sb  = SQL::AnyDBD->new($dbh);
+ my $sql = $sb->DELETE(%parms);
+
+ # yields ...
+
+ DELETE FROM 
+   student 
+ WHERE 
+   student.classes_id = 420 
+ ORDER BY 
+   date_enrolled 
+ LIMIT 4
+
+=head2 $sb->UPDATE ( set => $set_expr, , table => $t [, ...] )
 
 =over 4 
 
@@ -154,8 +207,6 @@ arguments take an arrayref  B<even if they only have one argument>:
 =item OPTIONAL: where, limit
 
 =back
-
-
 
 The required argument set is a string consisting of a series of
 
