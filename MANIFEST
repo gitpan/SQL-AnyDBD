@@ -1,0 +1,15 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+lib/SQL/AnyDBD.pm
+lib/SQL/AnyDBD/Default.pm
+lib/SQL/AnyDBD/Mysql.pm
+lib/SQL/AnyDBD/Pg.pm
+lib/SQL/AnyDBD/SQLite.pm
+t/1.t
+t/in.t
+t/limit.t
+t/select.t
+t/test_util.pl
+META.yml                                Module meta-data (added by MakeMaker)
