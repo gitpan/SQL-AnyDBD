@@ -1,54 +1,22 @@
 package SQL::AnyDBD;
 
-use 5.008;
 use strict;
 use warnings;
+use base 'DBIx::AnyDBD';
 
-require Exporter;
-
-use base qw/ DBIx::AnyDBD / ;
-
-use Params::Validate qw(:all);
-
-#our @ISA = qw(DBI);
-
-# Items to export into callers namespace by default. Note: do not export
-# names by default without a very good reason. Use EXPORT_OK instead.
-# Do not simply export all your public functions/methods/constants.
-
-# This allows declaration	use SQL::AnyDBD ':all';
-# If you do not need this, moving things directly into @EXPORT or @EXPORT_OK
-# will save memory.
-our %EXPORT_TAGS = ( 'all' => [ qw(
-	
-) ] );
-
-our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
-
-our @EXPORT = qw(
-	
-);
-
-our $VERSION = '0.02';
-
-
-# Preloaded methods go here.
+our $VERSION = '0.03';
 
 sub new {
-
-  my ($pkg, $dbh) = @_;
-  my $self = bless { 'package' => __PACKAGE__ , dbh => $dbh }, __PACKAGE__;
-  $self->rebless;
-  $self->_init if $self->can('_init');
-  return $self; 
-
+    my ($pkg, $dbh) = @_;
+    my $self = bless { 'package' => __PACKAGE__ , dbh => $dbh }, __PACKAGE__;
+    $self->rebless;
+    $self->_init if $self->can('_init');
+    return $self; 
 }
 
-
-
 1;
+
 __END__
-# Below is stub documentation for your module. You'd better edit it!
 
 =head1 NAME
 
@@ -59,12 +27,12 @@ SQL::AnyDBD - Perl extension to generate SQL for RDBMS variants
   use SQL::AnyDBD;
 
   my $dbh = DBI->connect($dsn, $user, $pass, $attr) or die $!;
-  my $sb  = SQL::AnyDBD->new($dbh);
+  my $sa  = SQL::AnyDBD->new($dbh);
 
   my $rows_desired = 8;
   my $start_row    = 4;
 
-  warn $sb->LIMIT(rows_desired => $rows_desired, start_row => $start_row);
+  warn $sa->LIMIT(rows_desired => $rows_desired, start_row => $start_row);
 
   # yields ...
 
@@ -83,7 +51,7 @@ them in that order, but now is no time to get into a holy war. :)
 
 =head1 METHODS
 
-=head2 $sb->LIMIT(rows_desired => $r [ , start_row => $s ] )
+=head2 $sa->LIMIT(rows_desired => $r [ , start_row => $s ] )
 
 =over 4
 
@@ -97,8 +65,7 @@ A limit clause is used to limit the result set from an SQL select.
 Each of the big 3 supports this concept. All 3 also accept integers for both
 arguments. However, Pg can also accept the term C<ALL> for C<rows_desired>.  
 
-
-=head2 $sb->IN ( values => \@v )
+=head2 $sa->IN ( values => \@v )
 
 =over 4 
 
@@ -110,24 +77,38 @@ It is required that the arrayref C<values> be passed.
 It is not required that the
 arrayref have any data:
 
- my $sql = $sb->IN(values => [12..14]);
+ my $sql = $sa->IN(values => [12..14]);
 
  # yields...
 
  IN (12,13,14)
 
-=head2 $sb->SELECT ( fields => \@f, tables => \@t, ... )
+=head2 $sa->AS ( $real, $alias)
 
 =over 4 
 
-=item REQUIRED: fields, tables
+=item REQUIRED: both arguments
 
-=item OPTIONAL: where, group_by, having, order_by, limit
+=back
+
+ my $sql = $sa->AS('userprefs', 'up');
+ 
+ # yields...
+
+ userprefs AS up
+
+=head2 $sa->SELECT ( fields => \@f, tables => \@t, ... )
+
+=over 4 
+
+=item REQUIRED: fields, 
+
+=item OPTIONAL: tables, where, group_by, having, order_by, limit
 
 =back
 
 All the optional arguments take a string as an argument with the exception of
-C<limit> which takes a hashref which is passed to C<LIMIT()>. Both required
+C<limit> which takes a hashref which is passed to C<LIMIT()>. 'tables' and the required
 arguments take an arrayref  B<even if they only have one argument>: 
 
  my %select = 
@@ -141,8 +122,8 @@ arguments take an arrayref  B<even if they only have one argument>:
 	 limit    => { rows_desired => 5, start_row => 77 },
 	);
 
- my $sb  = SQL::AnyDBD->new($dbh);
- my $sql = $sb->SELECT(%select);
+ my $sa  = SQL::AnyDBD->new($dbh);
+ my $sql = $sa->SELECT(%select);
 
  # yields...
 
@@ -163,7 +144,15 @@ arguments take an arrayref  B<even if they only have one argument>:
  OFFSET 
     77
 
-=head2 $sb->DELETE ( table => $tbl [ ,  ...  ] )
+As of 0.03 'tables' is optional so that you can do queries liek this:
+ 
+ my $sql = $sa->SELECT( 'fields' => [ $sa->function('NOW', time) ]);
+  
+ #yields:
+ 
+ SELECT NOW(1170616724)
+
+=head2 $sa->DELETE ( table => $tbl [ ,  ...  ] )
 
 =over 4 
 
@@ -185,8 +174,8 @@ conjunction with C<limit> in order to delete rows based on order:
 	 limit  => 4
 	);
 
- my $sb  = SQL::AnyDBD->new($dbh);
- my $sql = $sb->DELETE(%parms);
+ my $sa  = SQL::AnyDBD->new($dbh);
+ my $sql = $sa->DELETE(%parms);
 
  # yields ...
 
@@ -198,7 +187,7 @@ conjunction with C<limit> in order to delete rows based on order:
    date_enrolled 
  LIMIT 4
 
-=head2 $sb->UPDATE ( set => $set_expr, , table => $t [, ...] )
+=head2 $sa->UPDATE ( set => $set_expr, , table => $t [, ...] )
 
 =over 4 
 
@@ -227,14 +216,14 @@ arguments take an arrayref  B<even if they only have one argument>:
 	 limit  => 12
 	);
 
- my $sb  = SQL::AnyDBD->new($dbh);
- my $sql = $sb->UPDATE(%update);
+ my $sa  = SQL::AnyDBD->new($dbh);
+ my $sql = $sa->UPDATE(%update);
 
  # yields...
 
  UPDATE student SET student_ssan = NULL WHERE student_country_id <> 1 LIMIT 12
 
-=head2 $sb->INSERT ( table => $tbl, values => \@values ...
+=head2 $sa->INSERT ( table => $tbl, values => \@values ...
 
 =over 4 
 
@@ -252,8 +241,8 @@ arguments take an arrayref  B<even if they only have one argument>:
      values    => [qw(123 45 9876 olajuwon hakeem)]
    );
 
- my $sb  = SQL::AnyDBD->new($dbh);
- my $sql = $sb->INSERT(%insert);
+ my $sa  = SQL::AnyDBD->new($dbh);
+ my $sql = $sa->INSERT(%insert);
 
  # yields ...
 
@@ -262,17 +251,90 @@ arguments take an arrayref  B<even if they only have one argument>:
  VALUES
    (123,           45,            9876,         olajuwon,     hakeem)
 
+=head2 Utility methods
 
-=head2 EXPORT
+=head3 $sa->function($function_name, $argument_string)
 
-None by default.
+This utility method helps us to consistently render funtion call SQL.
 
+    $sa->function('foo') # FOO()
+    $sa->function('bar', q{'baz = 1'}) # BAR('baz = 1')
+
+A subclass might have a lookup hash in its function() where it translates common functions to its specific type and set default arguments:
+
+    $sa->function('NOW') # SYSTEM_TIME( GMTOFFSET -4 )
+
+=head3 $sa->get_placeholder_string()
+
+Pass a single array ref or array and you get back a string suitable for placeholding ('?' joined with commas):
+
+   my @people = (
+       ['Larry', 'Wall'],
+       ['Homer', 'Simpson'],
+       ['Joe', 'Mama'],
+   );
+
+   my $sth = $dbh->prepare( 
+       $sa->INSERT(
+          'table'  => 'people',
+          'values' => [ 'NULL', $sa->get_placeholder_string( $people[0] ) ], # ?,?
+       )
+   );
+   # INSERT INTO people VALUES(NULL,?,?)
+   
+   for my $person ( @people ) {
+       $sth->execute( @{ $person } );
+   }
+
+=head3 $sa->get_placeholder_array()
+
+Same as get_placeholder_string() except it returns an array of '?' placeholder
+(or an array ref of the same in scalar context)
+
+=head3 $sa->get_sql_from_files()
+
+Takes a list of files and concatenates their contents together.
+
+If a given argument exists with a dot-normalized_sql_driver_name that is used instead.
+
+If you are using SQLite and do this:
+
+   my $sql = $sa->get_sql_from_files('./sql/schema');
+
+Then is uses ./sql/schema.sqlite if it exists, and ./sql/schema if it does not.
+
+If the last argument is a code ref its return value is what gets concatenated instead of the raw file.
+It gets called with these arguments:
+  SQL::AnyDBD-object, SQL,       FILE_PASSED,    FILE_OPENED
+  $sa,               -contents-, './sql/schema', './sql/schema.sqlite'
+
+=head3 $sa->normalized_sql_driver_name()
+
+Normalized version of $sa->sql_driver_name()
+
+=head3 $sa->sql_driver_name()
+
+SQL::AnyDBD driver name
+
+=head3 $sa->sql_driver_version()
+
+SQL::AnyDBD driver version number.
+
+=head3 $sa->get_dbh()
+
+Returns the $dbh passed to new(). provided by L<DBIx::AnyDBD>
 
 =head1 SEE ALSO
+
+L<DBIx::Std>
 
 =head2 Multi-database Products on CPAN
 
 =over 4
+
+=item L<DBIx::Std>
+
+=item L<Rose::DB>
 
 =item L<SQL::Translator>
 
@@ -307,6 +369,8 @@ http://www.mysql.com
 =head1 AUTHOR
 
 Terrence Brannon, <tbone@cpan.org>
+
+v0.03 Co-maintainer Daniel Muey, L<http://drmuey.com/cpan_contact.pl>
 
 =head1 COPYRIGHT AND LICENSE
 

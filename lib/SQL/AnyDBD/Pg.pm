@@ -1,24 +1,31 @@
 package SQL::AnyDBD::Pg;
 
-use Params::Validate qw(:all);
+use strict;
+use Params::Validate qw(:types validate_with);
 
 sub LIMIT {
+    my $sa = shift;
+    
+    my %p = validate_with(
+        'params' => \@_, 
+        'spec'   => { 
+            'rows_desired' => { 
+                'type'     => SCALAR, 
+                'optional' => 0, 
+                'regex'    => qr/ \A (?: ALL | \d+ ) \z /xmsi,
+            },
+		    'start_row'    => { 
+		        'type'     => SCALAR, 
+		        'optional' => 1, 
+		        'regex'    => qr/ \A \d* \z /xms,
+		    }, 
+        },
+    );
 
-    shift;
-    my %p = validate_with
-      (params => \@_, 
-       spec   => { rows_desired => 
-		   { type => SCALAR, optional => 0, regex => qr/(ALL|\d+)/i },
-		   start_row => 
-		   { type => SCALAR, optional => 1, regex => qr/\d*/ } 
-		 });
+    my $LIMIT = "LIMIT $p{'rows_desired'}";
+    $LIMIT   .= " OFFSET $p{'start_row'}" if $p{'start_row'};
 
-    my   @LIMIT = "LIMIT  $p{rows_desired}";
-    push @LIMIT,  "OFFSET $p{start_row}"    if $p{start_row};
-
-    "@LIMIT"
-
+    return $LIMIT;
 }
-
 
 1;

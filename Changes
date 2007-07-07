@@ -1,5 +1,19 @@
 Revision history for Perl extension SQL::AnyDBD.
 
+0.03  Sat Jul  7 18:35:11 2007
+	- DMUEY contributed:
+		- removed unnecessary Exporter use from AnyDBD.pm 
+		- streamlined use of Params::Validate and what it [ex|im]ported
+	    - fixed regexes used in Params::Validate checks
+		- Added and documented AS(), function(), count(), get_sql_from_files(), sql_driver_version(), sql_driver_name(), normalized_sql_driver_name(), get_placeholder_string(), and get_placeholder_array()
+		- Generated SQL should be a bit cleaner (join only defined values, etc)
+		- SELECT not require "tables" so you could do a "SELECT NOW();" type query
+		- Cleaned up Makefile.PL including removing restriction to 5.8
+		- Cleaned up README
+		- General Code cleanup as per "Perl Best Practices"
+		- redo tests to use pseudo sqlite so no preset info/prompts/db driver are required
+		- [todo] create and include SQL::AnyDBD::Oracle.pm, change 'big 3' refs to include changes [/todo]
+		
 0.01  Tue Dec 30 20:34:52 2003
 	- original version; created by h2xs 1.22 with options
 		-A -X -n SQL::AnyDBD
